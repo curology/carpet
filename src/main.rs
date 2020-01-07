@@ -2,26 +2,81 @@ use parquet::column::reader::ColumnReader;
 use parquet::column::writer::ColumnWriter;
 use parquet::file::properties::WriterProperties;
 use parquet::file::reader::{FileReader, SerializedFileReader};
-use parquet::file::writer::{FileWriter, RowGroupWriter, SerializedFileWriter};
+use parquet::file::writer::{FileWriter, SerializedFileWriter};
 
-// use parquet::record::Row;
-// use parquet::record::RowAccessor;
-
-// use parquet::column::reader::get_typed_column_reader;
-use parquet::data_type::{ByteArrayType, Int32Type, Int64Type};
+use parquet::data_type::ByteArray;
 
 use std::fs;
 use std::fs::File;
 use std::path::Path;
 use std::rc::Rc;
 
-use parquet::basic::Type;
+use parquet::schema::printer::print_parquet_metadata;
 
-use parquet::schema::printer::{print_file_metadata, print_parquet_metadata, print_schema};
+use std::io::Error;
 
-use std::str;
+struct ParquetColumn {
+    int_values: Vec<i32>,
+    byte_values: Vec<ByteArray>,
+    def_levels: Vec<i16>,
+    rep_levels: Vec<i16>,
+}
 
-trait RowVec {}
+fn read_column(
+    column_index: usize,
+    num_rows: usize,
+    row_group_reader: &Box<dyn parquet::file::reader::RowGroupReader>,
+) -> Result<ParquetColumn, Error> {
+    let mut def_levels = vec![Default::default(); num_rows];
+    let mut rep_levels = vec![Default::default(); num_rows];
+    let batch_size = num_rows;
+    let mut column_reader = row_group_reader.get_column_reader(column_index).unwrap();
+    match column_reader {
+        ColumnReader::ByteArrayColumnReader(ref mut typed_reader) => {
+            let mut values = vec![Default::default(); num_rows];
+            while let Ok((read, _)) = typed_reader.read_batch(
+                batch_size, // batch size
+                Some(&mut def_levels),
+                Some(&mut rep_levels),
+                &mut values,
+            ) {
+                if read < batch_size {
+                    return Ok(ParquetColumn {
+                        byte_values: values,
+                        int_values: vec![],
+                        def_levels: def_levels,
+                        rep_levels: rep_levels,
+                    });
+                }
+            }
+        }
+        ColumnReader::Int32ColumnReader(ref mut typed_reader) => {
+            let mut values = vec![Default::default(); num_rows];
+            while let Ok((read, _)) = typed_reader.read_batch(
+                batch_size, // batch size
+                Some(&mut def_levels),
+                Some(&mut rep_levels),
+                &mut values,
+            ) {
+                if read < batch_size {
+                    return Ok(ParquetColumn {
+                        byte_values: vec![],
+                        int_values: values,
+                        def_levels: def_levels,
+                        rep_levels: rep_levels,
+                    });
+                }
+            }
+        }
+        _ => unimplemented!(),
+    }
+    Ok(ParquetColumn {
+        byte_values: vec![],
+        int_values: vec![],
+        def_levels: def_levels,
+        rep_levels: rep_levels,
+    })
+}
 
 fn main() {
     let file = File::open(&Path::new(
@@ -29,11 +84,10 @@ fn main() {
     ))
     .unwrap();
     let reader = SerializedFileReader::new(file).unwrap();
-    let mut iter = reader.get_row_iter(None).unwrap();
     let metadata = reader.metadata();
     let row_group_count = metadata.num_row_groups();
 
-    // print_metadata(&mut std::io::stdout(), &metadata);
+    print_parquet_metadata(&mut std::io::stdout(), &metadata);
     println!("{}", row_group_count);
 
     let out_path = Path::new("***REMOVED***");
@@ -42,94 +96,43 @@ fn main() {
     let file = fs::File::create(&out_path).unwrap();
 
     let mut writer = SerializedFileWriter::new(file, schema, props).unwrap();
-    let mut i = 0;
 
-    let mut string_types: Vec<Vec<String>> = vec![];
-    let mut int_types: Vec<Vec<i32>> = vec![];
-    let mut indexes: Vec<usize> = vec![];
-
-    let row_group_metadata = metadata.row_group(0);
-    for ptr in row_group_metadata.columns().into_iter() {
-        if ptr.column_type() == Type::INT32 {
-            int_types.push(vec![]);
-            indexes.push(int_types.len() - 1);
-        }
-
-        if ptr.column_type() == Type::BYTE_ARRAY {
-            string_types.push(vec![]);
-            indexes.push(string_types.len() - 1);
-        }
-    }
     for i in 0..row_group_count {
         // Group meta
         let row_group_metadata = metadata.row_group(i);
+        let columns_data = row_group_metadata.columns();
         // Mutable values for row
         let row_group_reader = reader.get_row_group(i).unwrap();
         let mut row_group_writer = writer.next_row_group().unwrap();
-        let num_rows = row_group_metadata.num_rows() as usize;
-
-        println!("Row Groups: {}", row_group_count);
-        println!("Rows: {}", num_rows);
-        println!("Columns: {}", row_group_metadata.num_columns());
 
         for j in 0..row_group_metadata.num_columns() {
-            let mut string_values: Vec<parquet::data_type::ByteArray> =
-                vec![Default::default(); num_rows];
-            let mut int_values: Vec<i32> = vec![Default::default(); num_rows];
-            let mut def_levels = vec![Default::default(); num_rows];
-            let mut rep_levels = vec![Default::default(); num_rows];
-            let mut column_reader = row_group_reader.get_column_reader(j).unwrap();
-            let batch_size = 20;
-            match column_reader {
-                ColumnReader::ByteArrayColumnReader(ref mut typed_reader) => {
-                    while let Ok((read, _)) = typed_reader.read_batch(
-                        batch_size, // batch size
-                        Some(&mut def_levels),
-                        Some(&mut rep_levels),
-                        &mut string_values,
-                    ) {
-                        if read < batch_size {
-                            println!("{}", read);
-                            break;
-                        }
-                    }
-                }
-                ColumnReader::Int32ColumnReader(ref mut typed_reader) => {
-                    while let Ok((read, _)) = typed_reader.read_batch(
-                        batch_size, // batch size
-                        Some(&mut def_levels),
-                        Some(&mut rep_levels),
-                        &mut int_values,
-                    ) {
-                        if read < batch_size {
-                            break;
-                        }
-                    }
-                }
-                _ => {}
-            }
+            let column =
+                read_column(j, columns_data[j].num_values() as usize, &row_group_reader).unwrap();
 
+            println!("Processing column: {}", j);
+            println!("Column Values: {:?}", columns_data[j].num_values());
+            // Column writer
             if let Some(mut col_writer) = row_group_writer.next_column().unwrap() {
                 match col_writer {
                     ColumnWriter::ByteArrayColumnWriter(ref mut typed_writer) => {
-                        typed_writer
-                            .write_batch(&string_values, Some(&def_levels), Some(&rep_levels))
+                        let batch = &column.byte_values;
+                        let sm_write = typed_writer
+                            .write_batch(batch, Some(&column.def_levels), Some(&column.rep_levels))
                             .unwrap();
+                        println!("Wrote: {}", sm_write)
                     }
                     ColumnWriter::Int32ColumnWriter(ref mut typed_writer) => {
+                        let batch = &column.int_values;
                         typed_writer
-                            .write_batch(&int_values, Some(&def_levels), Some(&rep_levels))
+                            .write_batch(batch, Some(&column.def_levels), Some(&column.rep_levels))
                             .unwrap();
                     }
                     _ => {}
                 }
+                println!("Closing column");
                 row_group_writer.close_column(col_writer).unwrap();
             }
         }
-        // println!("{:?}", values.len());
-        // for v in values {
-        //     println!("{:?}", str::from_utf8(v.data()));
-        // }
         writer.close_row_group(row_group_writer).unwrap();
     }
     writer.close().unwrap();
