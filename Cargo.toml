@@ -1,5 +1,5 @@
 [package]
-name = "parquet-manlger"
+name = "carpet"
 version = "0.1.0"
 authors = ["Eric Wong <eric@curology.com>"]
 edition = "2018"
@@ -7,4 +7,5 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-parquet = "0.15.1"
+parquet = { git = "https://github.com/apache/arrow#4634c89f" }
+percent-encoding = "2.1.0"
