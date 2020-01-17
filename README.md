@@ -4,7 +4,7 @@
 # Carpet  
 A soft, fuzzy layer you throw over Parquet.
 
-This program takes date and comma separated list of email addresses to destroy. Any found references will be replaced with "ghost@curology.com"
+This program takes a date and a comma separated list of email addresses to destroy. Any found references will be replaced with "ghost@curology.com"
 ex:
 ```
 carpet 2020-1-30 foo@bar.com,baz@qux.org
