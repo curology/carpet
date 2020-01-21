@@ -3,8 +3,8 @@ use std::ffi::OsString;
 use std::fs::{read_dir, DirEntry};
 use std::path::Path;
 
-mod parquet_file;
-use parquet_file::ParquetFile;
+mod carpet_parquet;
+use carpet_parquet::ParquetFile;
 
 fn main() {
     // Intake arguments.
@@ -25,7 +25,8 @@ fn main() {
     for file_path in dir_files {
         let mut file = ParquetFile::read(file_path.path().as_ref());
         for group in file.row_groups.iter_mut() {
-            for ref mut column in group.columns.iter_mut() {
+            let columns = &mut group.columns.iter_mut();
+            for column in columns {
                 column.remove_value(email_to_remove.clone(), email_to_replace.clone());
             }
         }
