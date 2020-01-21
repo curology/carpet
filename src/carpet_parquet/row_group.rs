@@ -8,10 +8,9 @@ pub struct RowGroup {
 }
 
 impl RowGroup {
-    pub fn new(metadata: RowGroupMetaDataPtr, reader: &Box<dyn RowGroupReader>) -> Self {
+    pub fn new(metadata: RowGroupMetaDataPtr, reader: &dyn RowGroupReader) -> Self {
         let num_columns = metadata.num_columns() as usize;
         let columns = (0..num_columns)
-            .into_iter()
             .map(|column_index| {
                 ParquetColumn::read(
                     column_index,
@@ -22,9 +21,6 @@ impl RowGroup {
             })
             .collect();
 
-        Self {
-            metadata: metadata,
-            columns: columns,
-        }
+        Self { metadata, columns }
     }
 }

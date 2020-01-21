@@ -21,7 +21,7 @@ impl ParquetColumn {
     pub fn read(
         column_index: usize,
         num_values: usize,
-        row_group_reader: &Box<dyn parquet::file::reader::RowGroupReader>,
+        row_group_reader: &dyn parquet::file::reader::RowGroupReader,
     ) -> Result<ParquetColumn, Error> {
         let mut def_levels = vec![Default::default(); num_values];
         let mut rep_levels = vec![Default::default(); num_values];
@@ -62,22 +62,22 @@ impl ParquetColumn {
         Self {
             int_values: vec![],
             byte_values: values,
-            def_levels: def_levels,
-            rep_levels: rep_levels,
+            def_levels,
+            rep_levels,
         }
     }
     fn from_int(values: Vec<i32>, def_levels: Vec<i16>, rep_levels: Vec<i16>) -> Self {
         Self {
             int_values: values,
             byte_values: vec![],
-            def_levels: def_levels,
-            rep_levels: rep_levels,
+            def_levels,
+            rep_levels,
         }
     }
 
     pub fn write(
         &self,
-        writer: &mut Box<dyn parquet::file::writer::RowGroupWriter>,
+        writer: &mut dyn parquet::file::writer::RowGroupWriter,
     ) -> Result<(), Error> {
         if let Some(mut col_writer) = writer.next_column().unwrap() {
             match col_writer {
@@ -108,15 +108,12 @@ impl ParquetColumn {
 
     pub fn remove_value(&mut self, search: String, replace: String) {
         for (index, value) in self.byte_values.clone().iter().enumerate() {
-            match value.as_utf8() {
-                Ok(val) => {
-                    let k = find_subsequence(val.as_bytes(), search.as_bytes());
-                    if k != None {
-                        let data = val.replace(search.as_str(), replace.as_str());
-                        self.byte_values[index].set_data(BufferPtr::new(data.as_bytes().to_vec()));
-                    }
+            if let Ok(val) = value.as_utf8() {
+                let k = find_subsequence(val.as_bytes(), search.as_bytes());
+                if k != None {
+                    let data = val.replace(search.as_str(), replace.as_str());
+                    self.byte_values[index].set_data(BufferPtr::new(data.as_bytes().to_vec()));
                 }
-                _ => {}
             }
         }
     }

@@ -31,7 +31,7 @@ impl ParquetFile {
         for group in self.row_groups.iter() {
             let mut row_group_writer = writer.next_row_group().unwrap();
             for column in group.columns.iter() {
-                column.write(&mut row_group_writer).unwrap();
+                column.write(&mut *row_group_writer).unwrap();
             }
             writer.close_row_group(row_group_writer).unwrap();
         }
@@ -44,16 +44,15 @@ impl ParquetFile {
         let reader = SerializedFileReader::new(file).unwrap();
         let meta = reader.metadata();
         let row_groups = (0..meta.num_row_groups())
-            .into_iter()
             .map(|i| {
                 let row_group_metadata = meta.row_group(i);
                 let row_group_reader = reader.get_row_group(i).unwrap();
-                RowGroup::new(row_group_metadata, &row_group_reader)
+                RowGroup::new(row_group_metadata, &*row_group_reader)
             })
             .collect();
 
         Self {
-            row_groups: row_groups,
+            row_groups,
             metadata: meta,
         }
     }
