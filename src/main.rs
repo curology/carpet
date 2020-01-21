@@ -23,7 +23,6 @@ fn main() {
 
     // Open each file and remove the offending strings.
     for file_path in dir_files {
-        println!("{:?}", file_path);
         let mut file = ParquetFile::read(file_path.path().as_ref());
         for group in file.row_groups.iter_mut() {
             for ref mut column in group.columns.iter_mut() {
