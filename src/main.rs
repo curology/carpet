@@ -1,7 +1,6 @@
 use std::env;
 use std::ffi::OsString;
-use std::fs::{read_dir, DirEntry};
-use std::path::Path;
+use std::fs::{copy, read_dir, remove_file, DirEntry};
 
 mod carpet_parquet;
 use carpet_parquet::ParquetFile;
@@ -30,6 +29,21 @@ fn main() {
                 column.remove_value(email_to_remove.clone(), email_to_replace.clone());
             }
         }
-        file.write_to(Path::new("out.parquet")).unwrap();
+        // Make a backup before writing.
+        let mut backup_path = file_path.path();
+        backup_path.set_extension("parquet.backup");
+        copy(file_path.path(), backup_path.clone()).unwrap();
+
+        // Write the final file, if we fail then restore the backup.
+        match file.write_to(file_path.path().as_ref()) {
+            Ok(_) => {
+                remove_file(backup_path).unwrap();
+            }
+            Err(err) => {
+                copy(&backup_path, file_path.path()).unwrap();
+                remove_file(&backup_path).unwrap();
+                panic!("Error while writing file: {:?}", err)
+            }
+        };
     }
 }
