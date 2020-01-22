@@ -56,4 +56,10 @@ impl ParquetFile {
             metadata: meta,
         }
     }
+
+    pub fn is_dirty(&self) -> bool {
+        self.row_groups
+            .iter()
+            .any(|group| group.columns.iter().any(|column| column.is_dirty))
+    }
 }

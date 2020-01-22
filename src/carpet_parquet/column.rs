@@ -9,6 +9,7 @@ pub struct ParquetColumn {
     byte_values: Vec<ByteArray>,
     def_levels: Vec<i16>,
     rep_levels: Vec<i16>,
+    pub is_dirty: bool,
 }
 
 fn find_subsequence(haystack: &[u8], needle: &[u8]) -> Option<usize> {
@@ -64,6 +65,7 @@ impl ParquetColumn {
             byte_values: values,
             def_levels,
             rep_levels,
+            is_dirty: false,
         }
     }
     fn from_int(values: Vec<i32>, def_levels: Vec<i16>, rep_levels: Vec<i16>) -> Self {
@@ -72,6 +74,7 @@ impl ParquetColumn {
             byte_values: vec![],
             def_levels,
             rep_levels,
+            is_dirty: false,
         }
     }
 
@@ -113,6 +116,7 @@ impl ParquetColumn {
                 if k != None {
                     let data = val.replace(search.as_str(), replace.as_str());
                     self.byte_values[index].set_data(BufferPtr::new(data.as_bytes().to_vec()));
+                    self.is_dirty = true;
                 }
             }
         }
