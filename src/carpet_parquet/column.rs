@@ -109,16 +109,37 @@ impl ParquetColumn {
         Ok(())
     }
 
-    pub fn remove_value(&mut self, search: String, replace: String) {
-        for (index, value) in self.byte_values.clone().iter().enumerate() {
-            if let Ok(val) = value.as_utf8() {
-                let k = find_subsequence(val.as_bytes(), search.as_bytes());
-                if k != None {
-                    let data = val.replace(search.as_str(), replace.as_str());
-                    self.byte_values[index].set_data(BufferPtr::new(data.as_bytes().to_vec()));
-                    self.is_dirty = true;
+    pub fn remove_values(&mut self, search_values: Vec<String>, replace: String) {
+        let mut matches: Vec<Vec<usize>> = vec![];
+        // Find which values match and store their indexes.
+        for (data_index, data_value) in self.byte_values.iter().enumerate() {
+            if let Ok(utf8_value) = data_value.as_utf8() {
+                let byte_value = utf8_value.as_bytes();
+                for (email_index, search) in search_values.iter().enumerate() {
+                    // Short circuit if the search term is longer than the value.
+                    if search.len() > utf8_value.len() {
+                        continue;
+                    }
+
+                    // Search the value for any matches.
+                    let found_index = find_subsequence(byte_value, search.as_bytes());
+                    if found_index != None {
+                        matches.push(vec![data_index, email_index]);
+                    }
                 }
             }
+        }
+
+        // Go through the matches and replace the search string with the replacement.
+        for email_match in matches {
+            let val_index = email_match[0];
+            let email_index = email_match[1];
+            // Construct the new value.
+            let data = String::from(self.byte_values[val_index].as_utf8().unwrap())
+                .replace(&search_values[email_index], replace.as_str());
+            // Overwrite the old value with the updated one.
+            self.byte_values[val_index].set_data(BufferPtr::new(data.as_bytes().to_vec()));
+            self.is_dirty = true;
         }
     }
 }

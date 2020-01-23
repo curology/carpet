@@ -9,7 +9,7 @@ fn main() {
     // Intake arguments.
     let args: Vec<String> = env::args().collect();
     let data_folder = args[1].clone();
-    let email_to_remove = args[2].clone();
+    let emails_to_remove: Vec<String> = args[2].clone().split(',').map(String::from).collect();
     let email_to_replace = String::from("ghost@curology.com");
 
     // Open up folder and get file paths.
@@ -26,7 +26,7 @@ fn main() {
         for group in file.row_groups.iter_mut() {
             let columns = &mut group.columns.iter_mut();
             for column in columns {
-                column.remove_value(email_to_remove.clone(), email_to_replace.clone());
+                column.remove_values(emails_to_remove.clone(), email_to_replace.clone());
             }
         }
 
