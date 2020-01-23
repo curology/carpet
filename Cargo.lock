@@ -24,7 +24,7 @@ checksum = "71877e174a5d78c969228d628c4f7f3b545d13452bd3d9393fa07aacfb7c6894"
 [[package]]
 name = "arrow"
 version = "1.0.0-SNAPSHOT"
-source = "git+https://github.com/apache/arrow#4634c89f#8f3148bdeadb18026991da7d3a9490f3890f086f"
+source = "git+https://github.com/apache/arrow#4634c89f#51ba4bcf658ea0e5ccc0e2e1cbfca64a9556a3fa"
 dependencies = [
  "chrono",
  "csv",
@@ -134,10 +134,9 @@ dependencies = [
 
 [[package]]
 name = "carpet"
-version = "0.1.0"
+version = "0.9.0"
 dependencies = [
  "parquet",
- "percent-encoding",
 ]
 
 [[package]]
@@ -483,7 +482,7 @@ dependencies = [
 [[package]]
 name = "parquet"
 version = "1.0.0-SNAPSHOT"
-source = "git+https://github.com/apache/arrow#4634c89f#8f3148bdeadb18026991da7d3a9490f3890f086f"
+source = "git+https://github.com/apache/arrow#4634c89f#51ba4bcf658ea0e5ccc0e2e1cbfca64a9556a3fa"
 dependencies = [
  "arrow",
  "brotli",
@@ -510,12 +509,6 @@ dependencies = [
  "thrift",
  "try_from 0.3.2",
 ]
-
-[[package]]
-name = "percent-encoding"
-version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 
 [[package]]
 name = "proc-macro2"
