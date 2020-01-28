@@ -3,8 +3,11 @@ name = "carpet"
 version = "0.9.0"
 authors = ["Eric Wong <eric@curology.com>", "Max Countryman <max@curology.com>"]
 edition = "2018"
+repository = "https://github.com/PocketDerm/carpet"
+description = "A CLI tool to find and replace strings in Parquet files."
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-parquet = { git = "https://github.com/apache/arrow#4634c89f" }
+parquet = { git = "https://github.com/apache/arrow", rev = "464d557"}

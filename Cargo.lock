@@ -24,7 +24,7 @@ checksum = "71877e174a5d78c969228d628c4f7f3b545d13452bd3d9393fa07aacfb7c6894"
 [[package]]
 name = "arrow"
 version = "1.0.0-SNAPSHOT"
-source = "git+https://github.com/apache/arrow#4634c89f#51ba4bcf658ea0e5ccc0e2e1cbfca64a9556a3fa"
+source = "git+https://github.com/apache/arrow?rev=464d557#464d55742c9b32928c17ab1aafd5077a72525143"
 dependencies = [
  "chrono",
  "csv",
@@ -482,7 +482,7 @@ dependencies = [
 [[package]]
 name = "parquet"
 version = "1.0.0-SNAPSHOT"
-source = "git+https://github.com/apache/arrow#4634c89f#51ba4bcf658ea0e5ccc0e2e1cbfca64a9556a3fa"
+source = "git+https://github.com/apache/arrow?rev=464d557#464d55742c9b32928c17ab1aafd5077a72525143"
 dependencies = [
  "arrow",
  "brotli",
