@@ -37,9 +37,7 @@ fn main() {
             copy(file_path.path(), backup_path.clone()).unwrap();
             // Write the final file, if we fail then restore the backup.
             match file.write_to(file_path.path().as_ref()) {
-                Ok(_) => {
-                    remove_file(backup_path).unwrap();
-                }
+                Ok(_) => {}
                 Err(err) => {
                     copy(&backup_path, file_path.path()).unwrap();
                     remove_file(&backup_path).unwrap();
