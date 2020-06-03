@@ -11,3 +11,7 @@ license = "MIT"
 
 [dependencies]
 parquet = { git = "https://github.com/apache/arrow", rev = "464d557"}
+
+[dev-dependencies]
+assert_cmd = "1.0.1"
+tempfile = "3"

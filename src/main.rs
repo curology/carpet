@@ -47,3 +47,30 @@ fn main() {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use assert_cmd::Command;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_carpet_runs() {
+        // Setup
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("record.parquet");
+        copy("test/data/record.parquet", file_path).unwrap();
+
+        // Test
+        let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
+        let assert = cmd.arg(dir.path()).arg("foo@bar.com").assert();
+        assert.success();
+
+        // Assert that a backup is created when there are records replaced
+        let backup_path = dir.path().join("record.parquet.backup");
+        assert_eq!(true, backup_path.exists());
+
+        // Cleanup
+        dir.close().unwrap();
+    }
+}
